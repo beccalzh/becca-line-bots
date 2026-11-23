@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Becca 的小幫手們｜LINE Bot 與網頁工具</title>
+<meta name="description" content="好用的 LINE bot 和網頁小工具一次找齊，點一下就能開始用。">
+<meta property="og:title" content="好用的小幫手，一次找齊">
+<meta property="og:description" content="好用的 LINE bot 和網頁小工具一次找齊，點一下就能開始用。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://becca-line-bots.netlify.app/">
+<meta property="og:image" content="https://becca-line-bots.netlify.app/assets/og-image-v5.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/favicon-v2.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
+<script>
+  // 先套用主題，避免閃爍：使用者選過的 > 系統設定
+  (function(){
+    var t=null; try{t=localStorage.getItem("theme")}catch(e){}
+    if(!t) t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+    document.documentElement.setAttribute("data-theme",t);
+  })();
+</script>
+<style>
+  /* 深海軍藍＋琥珀橘：淺色 */
+  :root{
+    color-scheme:light;
+    --bg:#edf1f6; --surface:#f7f9fc; --surface-2:#fbfcfe; --line:#d8dfe9;
+    --text:#1b2536; --text-2:#344155; --muted:#66748a;
+    --accent:#2d4a75; --accent-soft:rgba(45,74,117,.10); --glow:rgba(120,150,195,.3);
+    --sage:#d4661a; --btn-text:#fff; --qr-bg:#fff; --shadow:0 8px 24px rgba(25,40,70,.10);
+  }
+  /* 深海軍藍＋琥珀橘：深色 */
+  [data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#111927; --surface:#192333; --surface-2:#1e2a3c; --line:#2b384c;
+    --text:#e9eef5; --text-2:#cbd5e2; --muted:#8a98ac;
+    --accent:#93b3df; --accent-soft:rgba(147,179,223,.13); --glow:rgba(60,95,150,.35);
+    --sage:#e8782a; --btn-text:#fff; --qr-bg:#f1f4f8; --shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -200px, var(--glow), transparent 70%), var(--bg);
+    transition:background-color .3s,color .3s;
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:56px 20px 40px}
+  header{text-align:center;margin-bottom:40px}
+  .eyebrow{display:inline-block;font-size:13px;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);padding:4px 12px;border-radius:999px;margin-bottom:16px}
+  h1{font-size:clamp(28px,6vw,42px);margin:0 0 10px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 auto;max-width:30em}
+  .nb{display:inline-block}
+  .mob-only{display:none}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;align-items:start}
+  .card{
+    background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .top{display:flex;flex-direction:column;gap:12px;padding:22px 22px 18px}
+  .head{display:flex;gap:14px;align-items:center}
+  .avatar{width:60px;height:60px;border-radius:16px;flex:none;object-fit:cover;box-shadow:var(--shadow)}
+  .avatar.fallback{display:grid;place-items:center;background:var(--accent);color:#fff;font-weight:700;font-size:24px}
+  .name{font-size:19px;font-weight:700;margin:0 0 4px;line-height:1.3}
+  .tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:1px 10px;border-radius:999px;display:inline-block}
+  .tagline{font-size:14.5px;margin:0;color:var(--text-2);min-height:4.8em;text-wrap:pretty;line-break:strict}
+  .note{display:inline-block;font-size:12.5px;color:var(--text);background:var(--accent-soft);border-radius:8px;padding:3px 10px;margin:0;align-self:flex-start}
+
+  .note.empty{visibility:hidden}
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    background:var(--sage);color:var(--btn-text,#fff);text-decoration:none;font-weight:700;border:0;font-family:inherit;
+    padding:11px 14px;border-radius:13px;font-size:15px;transition:transform .15s,filter .15s;
+  }
+  .btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn.disabled{background:var(--line);color:var(--muted);cursor:not-allowed;pointer-events:none}
+
+  .more{
+    display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
+    background:none;border:0;border-top:1px solid var(--line);color:var(--muted);
+    font-family:inherit;font-size:13.5px;padding:10px;cursor:pointer;
+  }
+  .more:hover{color:var(--text);background:var(--accent-soft)}
+  .more .chev{transition:transform .25s;display:inline-block}
+  .card.open .more .chev{transform:rotate(180deg)}
+
+  .details{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+  .card.open .details{grid-template-rows:1fr}
+  .details > .inner{overflow:hidden}
+  .details-body{padding:16px 22px 22px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+  .chips{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
+  .chips li{
+    display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;color:var(--text);
+    background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 10px;
+  }
+
+  .links{display:flex;flex-direction:column;gap:8px}
+  .links a{display:block;text-align:center;text-decoration:none;color:var(--accent);font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--surface-2)}
+  .links a:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .join{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .qr{background:var(--qr-bg);border:1px solid var(--line);border-radius:14px;padding:8px;width:150px;height:150px}
+  .qr img{width:100%;height:100%;display:block}
+  .hint{font-size:12.5px;color:var(--muted);text-align:center;margin:0}
+  .id{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .id button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;font-size:12px;padding:2px 8px;cursor:pointer;font-family:inherit}
+  .id button:hover{color:var(--text);border-color:var(--muted)}
+
+  .theme-toggle{
+    position:fixed;top:16px;right:16px;z-index:10;display:flex;gap:2px;padding:3px;
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow);
+  }
+  .theme-toggle button{
+    border:0;background:none;color:var(--muted);font-family:inherit;font-size:13px;
+    padding:5px 12px;border-radius:999px;cursor:pointer;
+  }
+  .theme-toggle button[aria-pressed="true"]{background:var(--accent-soft);color:var(--text)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:48px}
+
+  @media (max-width:720px){
+    .wrap{padding-top:62px}
+    header{margin-bottom:22px}
+    .eyebrow{margin-bottom:10px;font-size:12px}
+    h1{font-size:26px;line-height:1.35;margin-bottom:6px}
+    .sub{font-size:14.5px}
+    .desk-only{display:none}
+    .mob-only{display:inline}
+    .grid{gap:14px}
+    .theme-toggle{position:absolute;top:14px}
+    .tagline{min-height:0}
+    .note.empty{display:none}
+    .join{display:none}  /* 手機上直接點按鈕加好友 */
+  }
+</style>
+</head>
+<body>
+<div class="theme-toggle" role="group" aria-label="切換主題">
+  <button type="button" data-theme-set="light">☀︎ 淺色</button>
+  <button type="button" data-theme-set="dark">☾ 深色</button>
+</div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">LINE BOT・網頁小工具</div>
+    <h1><span class="nb">好用的小幫手，</span><span class="nb">一次找齊</span></h1>
+    <p class="sub"><span class="desk-only">LINE bot 加好友就能用，網頁工具點開就能用。</span><span class="mob-only">點按鈕，馬上開始用</span></p>
+  </header>
+
+  <main class="grid" id="bots"></main>
+
+  <footer>© <span id="y"></span> Becca · 有問題或建議，直接在 bot 裡留言給我</footer>
+</div>
+
+<script>
+/* ===== 新增 bot：在這個陣列加一筆就好 ===== */
+const BOTS = [
+  {
+    name: "Speeder4Dancers",
+    category: "練舞工具",
+    icon: "/assets/speeder4dancers.png",
+    tagline: "在 LINE 輸入歌名或傳一段影片，就能隨時用慢速、切段落、鏡像來練舞的小幫手。",
+    lineId: "@729ozzub",
+    qr: "/assets/qr-729ozzub.svg",
+    features: [
+      ["🎵","找歌就練","輸入「歌手＋歌名」或貼 YouTube 連結，一鍵打開練舞主控台"],
+      ["🎬","用自己的影片練","直接在 LINE 傳影片（保留 30 天）"],
+      ["🐢","調整倍速，音高不變","0.5x～1x，可以用 0.05 微調"],
+      ["✂️","拖拉選段落","在時間軸上拖出 A–B，自動重複播放，還能倒數 3 秒再開始"],
+      ["🪞","鏡像播放","畫面左右翻轉，跟著鏡子方向練"],
+      ["💾","存段落、繼續上次","常練的段落取名儲存，下次一鍵回到上次練的地方"],
+      ["👯","分享給團員","把切好的段落傳到群組，團員點開就能練，而且改不到你的設定"],
+      ["⬇️","下載這一段","套用倍速和鏡像後存到手機，沒有網路也能練"]
+    ]
+  },
+  {
+    name: "味鑑 Flavordex",
+    category: "水煙口味",
+    icon: "/assets/flavordex.png",
+    tagline: "拍一張水煙罐的照片，就幫你認出品牌和口味，還會記下你做過的口味組合。",
+    note: "加好友就能用，每天有免費拍照次數。",
+    lineId: "@080uqurc",
+    qr: "/assets/qr-080uqurc.svg",
+    features: [
+      ["📷","拍照辨識","一張照片可以同時認好幾罐，對的直接按「全部正確」，錯的點那一罐改就好"],
+      ["🔍","查口味","打中文、英文或俄文都查得到，例如「薄荷」「darkside supernova」"],
+      ["🏷","品牌清單","打品牌名看這個牌子的口味，也可以問「有哪些品牌」「有哪些芒果口味」"],
+      ["📒","我的紀錄","拍過、確認過的口味會自動存成組合，之後可以翻回來找，或整理成文字複製"],
+      ["🎴","口味小卡","把一批口味做成一張圖卡，可以存下來或分享到 IG"],
+      ["📦","進貨識別","掃條碼或拍罐子整理成進貨清單，可以輸出 Excel，也能回頭看以前的進貨紀錄"],
+      ["📮","回報新口味","資料庫沒有的口味可以直接回報，審核過後就加進資料庫"]
+    ]
+  },
+  {
+    name: "一鍵點名",
+    category: "活動邀請",
+    icon: "/assets/yaoqing-v2.png",
+    tagline: "做好一張邀請卡，貼上名單，馬上產出每位客人專屬的名字邀請卡。",
+    note: "🎁 免費試用 3 場活動，不設使用期限",
+    lineId: "@939nurdq",
+    qr: "/assets/qr-939nurdq.svg",
+    features: [
+      ["📷","傳主視覺就能開始","在 LINE 傳一張做好的邀請卡圖片就好，不用下載 App"],
+      ["✨","AI 自動排版","AI 會找出放名字的位置，配好字體、大小、顏色和角度，也可以自己微調"],
+      ["📝","名單貼上就完成","一行一個名字，一次幾百人都可以，每人各自一張邀請卡"],
+      ["💾","一鍵存到相簿","一次存 100 張，再用 IG 私訊傳給客人"],
+      ["➕","臨時加人不另外扣額度","同一場活動可以隨時加名字、換名單"]
+    ]
+  },
+  {
+    name: "煙圈看板",
+    category: "水煙配對",
+    icon: "/assets/yanquan-v2.png",
+    tagline: "選好你的涼度、風味、氣氛和預算，看看有幾間合拍的水煙店。",
+    note: "免加好友，打開網頁就能用",
+    url: "https://claude.ai/artifact/HVsnS5aagPBrLHfu9zUimb",   // 網頁型：按鈕直接開這個網址
+    urlLabel: "開始配對",
+    qr: "/assets/qr-yanquan.svg",
+    links: [
+      ["📝 填小調查，解鎖店名", "https://claude.ai/artifact/5M9t3g9caaAw4iX42FL6EK"],
+      ["🏪 店家合作登記", "https://claude.ai/artifact/WjEHUtoBc7p2WZEmNCSCzJ"]
+    ],
+    features: [
+      ["❄️","涼度配對"],
+      ["🍃","風味偏好"],
+      ["🎶","氣氛篩選"],
+      ["💰","每人分攤試算"],
+      ["📍","區域篩選"]
+    ]
+  }
+];
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const addUrl = id => "https://line.me/R/ti/p/" + encodeURIComponent(id);
+
+// 還不能加的 bot 自動排到最後
+const SORTED = [...BOTS].sort((a, b) => !!a.disabled - !!b.disabled);
+document.getElementById("bots").innerHTML = SORTED.map((b, idx) => {
+  const showQr = b.qr && !b.disabled;
+  return `
+  <article class="card">
+    <div class="top">
+      <div class="head">
+        ${b.icon
+          ? `<img class="avatar" src="${esc(b.icon)}" alt="${esc(b.name)} 圖示">`
+          : `<div class="avatar fallback">${esc(b.name.slice(0,1))}</div>`}
+        <div>
+          <h2 class="name">${esc(b.name)}</h2>
+          ${b.category ? `<span class="tag">${esc(b.category)}</span>` : ""}
+        </div>
+      </div>
+      <p class="tagline">${esc(b.tagline)}</p>
+      ${b.note && !b.disabled ? `<p class="note">${esc(b.note)}</p>` : `<p class="note empty" aria-hidden="true">&nbsp;</p>`}
+      ${b.disabled
+        ? `<span class="btn disabled" aria-disabled="true">${esc(b.disabledLabel || "暫未開放")}</span>`
+        : b.url
+          ? `<a class="btn" href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.urlLabel || "打開網頁")} →</a>`
+          : `<a class="btn" href="${addUrl(b.lineId)}" target="_blank" rel="noopener">＋ 加入好友</a>`}
+    </div>
+    <button class="more" type="button" aria-expanded="false" aria-controls="d${idx}">
+      看完整功能 <span class="chev">▾</span>
+    </button>
+    <div class="details" id="d${idx}">
+      <div class="inner">
+        <div class="details-body">
+          <ul class="chips">
+            ${b.features.map(([i,t]) => `<li><span>${i}</span>${esc(t)}</li>`).join("")}
+          </ul>
+          ${b.links && b.links.length ? `<div class="links">${b.links.map(([t,u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join("")}</div>` : ""}
+          ${showQr ? `<div class="join">
+            <div class="qr"><img src="${esc(b.qr)}" alt="${esc(b.name)} 加好友 QR code" loading="lazy"></div>
+            <p class="hint">${b.url ? "用手機掃描打開網頁" : "用手機 LINE 掃描加好友"}</p>
+            ${b.lineId ? `<div class="id">LINE ID：${esc(b.lineId)} <button type="button" data-id="${esc(b.lineId)}">複製</button></div>` : ""}
+          </div>` : ""}
+        </div>
+      </div>
+    </div>
+  </article>`;
+}).join("");
+
+document.querySelectorAll(".more").forEach(btn => btn.addEventListener("click", () => {
+  const card = btn.closest(".card");
+  const open = card.classList.toggle("open");
+  btn.setAttribute("aria-expanded", open);
+  btn.firstChild.textContent = open ? "收合 " : "看完整功能 ";
+}));
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-id]");
+  if (!btn) return;
+  navigator.clipboard?.writeText(btn.dataset.id).then(() => {
+    btn.textContent = "已複製"; setTimeout(() => btn.textContent = "複製", 1500);
+  });
+});
+function syncToggle(){
+  const cur=document.documentElement.getAttribute("data-theme");
+  document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.themeSet===cur));
+}
+document.querySelectorAll("[data-theme-set]").forEach(b=>b.addEventListener("click",()=>{
+  document.documentElement.setAttribute("data-theme", b.dataset.themeSet);
+  try{localStorage.setItem("theme", b.dataset.themeSet)}catch(e){}
+  syncToggle();
+}));
+syncToggle();
+document.getElementById("y").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
